@@ -1,0 +1,29 @@
+
+{% extends 'html.twig' %}
+
+{% block styles %}
+<style>
+	ol {
+		font-size: 120%;
+		padding-left: 24px;
+	}
+	li {
+		margin-bottom: 1em;
+	}
+</style>
+{% endblock %}
+
+{% block header %}
+	<h1>Formation JavaScript</h1>
+{% endblock %}
+
+{% block content %}
+
+	<ol>
+		<li><a href="css.php">Rappels CSS</a></li>
+		<li><a href="perf.php">Performances sélecteur</a></li>
+		<li><a href="edit.php">Plusieurs FCKEditor sur la même page</a></li>
+		<li><a href="datepicker.php">Datepickers liés</a></li>
+	</ol>
+
+{% endblock %}

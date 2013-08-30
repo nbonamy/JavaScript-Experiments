@@ -1,0 +1,22 @@
+
+{% extends 'html.twig' %}
+
+{% block header %}
+	<h1>FSCKEditor</h1>
+{% endblock %}
+
+{% block content %}
+
+	<form action="edit.php" method="post">
+		<p><textarea class="ckeditor" id="editor1" name="editor1">{{ text1 }}</textarea></p>
+		<p><textarea class="ckeditor" id="editor2" name="editor2">{{ text2 }}</textarea></p>
+		<p><input type="submit" /></p>
+	</form>
+
+{% endblock %}
+
+{% block scripts %}
+
+	<script src="js/libs/ckeditor/ckeditor.js"></script>
+
+{% endblock %}

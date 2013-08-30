@@ -1,0 +1,79 @@
+
+{% extends 'html.twig' %}
+
+{% block header %}
+	<h1>CSS</h1>
+{% endblock %}
+
+{% block styles %}
+	<link rel="stylesheet" href="css/css1.css?v={{ random() }}">
+	<link rel="stylesheet" href="css/css2.css?v={{ random() }}">
+{% endblock %}
+
+{% block content %}
+
+	<div class="group" id="group">
+		<p class="element" id="element"></p>
+	</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+	<script src="js/libs/CSSUtilities.js"></script>
+	<script src="js/libs/Selector.js"></script>
+	<script src="js/libs/ntc.js"></script>
+
+	<script>
+
+		function getComputedStyleValue(id, style) {
+			return window.getComputedStyle(document.getElementById(id), null).getPropertyValue(style)
+		}
+
+		function getMatchedCSSRule(id, style) {
+			var rules = CSSUtilities.getCSSRules('#element');
+				for (var i=rules.length-1; i>= 0; i--) {
+					var rule = rules[i];
+					if (rule.css.indexOf(style+':') != -1) {
+						return rule;
+					}
+				}
+			return null;
+		}
+
+		function getComputerColor(id) {
+			var rgb = getComputedStyleValue(id, 'color').match(/\d+/g);
+			var r = ('00' + parseInt(rgb[0]).toString(16)).substr(-2);
+			var g = ('00' + parseInt(rgb[1]).toString(16)).substr(-2);
+			var b = ('00' + parseInt(rgb[2]).toString(16)).substr(-2);
+			return '#' + r + g + b;
+		}
+
+		function getColorName(hex) {
+			var color = ntc.name(hex);
+			return color[2] ? color[1] : hex;
+		}
+
+		function getFileName(url) {
+			url = url.substring(0, (url.indexOf("#") == -1) ? url.length : url.indexOf("#"));
+			url = url.substring(0, (url.indexOf("?") == -1) ? url.length : url.indexOf("?"));
+			url = url.substring(url.lastIndexOf("/") + 1, url.length);
+			return url;
+		}
+
+		function updateElement() {
+			var rule = getMatchedCSSRule('element', 'color');
+			var color = getColorName(getComputerColor('element'));
+			$('#element').text('Ma couleur est ' + color + ' et vient de la règle ' + rule.selector + ' du fichier ' + getFileName(rule.href));
+		}
+
+		$(document).ready(function() {
+
+			CSSUtilities.define('async', false);
+			updateElement();
+
+		});
+
+	</script>
+
+{% endblock %}

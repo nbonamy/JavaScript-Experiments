@@ -1,0 +1,51 @@
+
+{% extends 'html.twig' %}
+
+{% block header %}
+	<h1>Datepicker</h1>
+{% endblock %}
+
+{% block styles %}
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/minified/jquery-ui.min.css">
+
+	<style>
+	.ui-datepicker .ui-state-hover {
+	  border-color: blue;
+	}
+	.ui-datepicker.custom .ui-state-hover {
+	  border-color: red;
+	}
+
+	</style>
+{% endblock %}
+
+{% block content %}
+
+	<input id="dt1"></input>
+	<input id="dt2"></input>
+
+{% endblock %}
+
+{% block scripts %}
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
+
+	<script>
+
+		$(document).ready(function() {
+
+			$('#dt1').datepicker();
+			$('#dt2').datepicker();
+
+			$('#dt2').focus(function() {
+				$('#dt2').datepicker('widget').addClass('custom');
+			});
+			$('#dt2').blur(function() {
+				$('#dt2').datepicker('widget').removeClass('custom');
+			});
+
+		});
+
+	</script>
+
+{% endblock %}

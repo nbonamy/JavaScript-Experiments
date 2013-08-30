@@ -1,0 +1,205 @@
+
+{% extends 'html.twig' %}
+
+{% block header %}
+	<div class="loader"><img src="img/loader.gif" /></div>
+	<h1>jQuery Performance</h1>
+	<a href="http://jsperf.com/jquery-selectors-context/2">http://jsperf.com/jquery-selectors-context/2</a>
+	<p>{{iter}} itérations pour chaque test, chaque sélecteur ne renvoie qu'un seul élément</p>
+{% endblock %}
+
+{% block content %}
+
+	<div id="error">
+	</div>
+
+	<table id="result">
+		<tr>
+			<th>Titre</th>
+			<th>Sélecteur</th>
+			<th>Temps (ms)</th>
+		</tr>
+	</table>
+
+	<div id="content">
+
+		{% for i in 1..max_i %}
+			<div class="level1" id="1_{{i}}">Level 1 #{{i}}
+				{% for j in 1..max_j %}
+					<div class="level2" id="1_{{i}}_2_{{j}}">Level 2 #{{j}}
+						{% for k in 1..max_k %}
+							<div class="level3" id="1_{{i}}_2_{{j}}_3_{{k}}">Level 3 #{{k}}
+								{% for l in 1..max_l %}
+									<div class="level4" id="1_{{i}}_2_{{j}}_3_{{k}}_4_{{l}}">Level4 #{{l}}
+									</div>
+								{% endfor %}
+							</div>
+						{% endfor %}
+					</div>
+				{% endfor %}
+			</div>
+		{% endfor %}
+
+
+	</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+	<script>
+
+	var maxs = new Array();
+	maxs[0] = {{max_i}};
+	maxs[1] = {{max_j}};
+	maxs[2] = {{max_k}};
+	maxs[3] = {{max_l}};
+
+	function checkResult(func, $item) {
+		if ($item.length == 0) {
+			var $err = $('#error .'+func+'.notenough');
+			if ($err.length == 0) {
+				$('#error').append('<div class="'+func+' notenough">'+func+': no element selected for '+$item.selector+'</div>');
+			}
+		} else if ($item.length > 1) {
+			var $err = $('#error .'+func+'.toomany');
+			if ($err.length == 0) {
+				$('#error').append('<div class="'+func+' toomany">'+func+': too many elements for '+$item.selector+'</div>');
+			}
+		}
+	}
+
+	function selectById(id) {
+		var $item = $(id);
+		checkResult(arguments.callee.name, $item);
+	}
+
+	function selectByElement(elem) {
+		var $item = $(elem);
+		checkResult(arguments.callee.name, $item);
+	}
+
+	function selectByClass(klass) {
+		var $item = $(klass);
+		checkResult(arguments.callee.name, $item);
+	}
+
+	function selectWithFindCache($context, selector) {
+		var $item = $context.find(selector);
+		checkResult('selectWithFindCache', $item);
+	}
+
+	function selectWithFindNoCache(context, selector) {
+		var $item = $(context).find(selector);
+		checkResult('selectWithFindNoCache', $item);
+	}
+
+	function selectWithChildrenCache($context) {
+		var $item = $context.children('.level4');
+		checkResult('selectWithChildrenCache', $item);
+	}
+
+	function selectWithChildrenNoCache(context) {
+		var $item = $(context).children('.level4');
+		checkResult('selectWithChildrenNoCache', $item);
+	}
+
+	function selectWithContext1($context) {
+		var $item = $('.level4', $context)
+		checkResult('selectWithContext1', $item);
+	}
+
+	function selectWithContext2(context) {
+		var $item = $(context + ' .level4')
+		checkResult('selectWithContext2', $item);
+	}
+
+	function selectWithContext3(context) {
+		var $item = $(context + '> .level4')
+		checkResult('selectWithContext2', $item);
+	}
+
+	function profile(title, sel, func, iter) {
+		var timer = new Timer();
+		timer.profile(func, iter);
+		timer.stop();
+		$('#result').append('<tr><td>'+title+'</td><td class="code">'+sel+'</td><td class="time">'+timer.milliseconds()+'</td></tr>');
+	}
+
+	$(document).ready(function() {
+
+		// header
+		var iter = {{iter}};
+
+		// on a besoin d'une racine
+		var level1 = Math.floor(Math.random()*1000 % maxs[0])+1;
+		var level2 = Math.floor(Math.random()*1000 % maxs[1])+1;
+		var level3 = Math.floor(Math.random()*1000 % maxs[2])+1;
+		var selector = '#1_'+level1+'_2_'+level2+'_3_'+level3;
+		var $context = $(selector);
+		var $parent = $context.parent();
+		var $grandpa = $parent.parent();
+		console.timeEnd("Context initialization");
+
+		// rajoutons une classe spéciale sur le niveau 4 de la racine
+		// et un span dedans pour le sélectionner
+		$('.level4', $context).addClass('select').append('<span>cible</span>');
+
+		// wait to real page load
+		setTimeout(function() {
+
+			// sélection par id
+			var id = selector+'_4_'+(Math.floor(Math.random()*1000 % maxs[3])+1);
+			profile('Sélection par id', '$("'+id+'")', function() {
+				selectById(id);
+			}, iter);
+
+			// simple tests
+			profile('Sélection par élément', '$("span")', function() { selectByElement('span') }, iter);
+			profile('Sélection par class', '$(".select")', function() { selectByClass('.select') }, iter);
+
+			// based on context
+			profile('Sélection avec contexte de type sélecteur', '$("'+selector+' .level4")', function() {
+				selectWithContext2(selector);
+			}, iter);
+			profile('Sélection avec contexte de type sélecteur direct', '$("'+selector+' > .level4")', function() {
+				selectWithContext3(selector);
+			}, iter);
+			profile('Sélection avec contexte de type élément', '$(".level4", $context)', function() {
+				selectWithContext1($context);
+			}, iter);
+			profile('Sélection avec find depuis le contexte sans cache', '$("'+selector+'").find(".level4")', function() {
+				selectWithFindNoCache(selector, '.level4');
+			}, iter);
+			profile('Sélection avec find depuis le contexte avec cache', '$context.find(".level4")', function() {
+				selectWithFindCache($context, '.level4');
+			}, iter);
+			profile('Sélection avec children depuis le contexte sans cache', '$("'+selector+'").children(".level4")', function() {
+				selectWithChildrenNoCache(selector);
+			}, iter);
+			profile('Sélection avec children depuis le contexte avec cache', '$context.children(".level4")', function() {
+				selectWithChildrenCache($context);
+			}, iter);
+			profile('Sélection avec find sur élément depuis le context avec cache', '$context.find("span")', function() {
+				selectWithFindCache($context, 'span');
+			}, iter);
+			profile('Sélection avec find sur élément depuis le parent du contexte avec cache', '$context.parent().find("span")', function() {
+				selectWithFindCache($parent, 'span');
+			}, iter);
+			profile('Sélection avec find sur élément depuis le grand-parent du contexte avec cache', '$context.parent().parent().find("span")', function() {
+				selectWithFindCache($grandpa, 'span');
+			}, iter);
+
+			// done
+			$('.loader').hide();
+			if ($('#error').show().children().length == 0) {
+				$('#error').attr('id', 'fine').append('Tests exécutés avec succès')
+			}
+
+		}, 500);
+
+	});
+
+	</script>
+
+{% endblock %}
